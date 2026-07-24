@@ -13,8 +13,9 @@ import { cn } from '@/lib/utils';
 
 // ─── Seções do manual ─────────────────────────────────────────
 const SECOES = [
-  { id: 'sobre', label: 'O que é o Sistema', icon: Info },
-  { id: 'inicio', label: 'O que você pode fazer', icon: Zap },
+  { id: 'sobre', label: 'Para que serve', icon: Info },
+  { id: 'botoes', label: 'Principais botoes', icon: Play },
+  { id: 'inicio', label: 'O que voce pode fazer', icon: Zap },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'escalas', label: 'Escalas de Trabalho', icon: Calendar },
   { id: 'experiencia', label: 'Experiência Geral', icon: Users },
@@ -416,6 +417,53 @@ function SecaoSobre() {
 }
 
 // ─── SEÇÃO: O que o gestor pode fazer ─────────────────────────
+function SecaoBotoes() {
+  const botoes = [
+    { nome: 'CIENTE', desc: 'Confirma que voce leu uma notificacao. O sistema registra quem visualizou.' },
+    { nome: 'SALVAR', desc: 'Grava a alteracao feita na tela atual.' },
+    { nome: 'SUBSTITUIR', desc: 'Solicita ao RH a substituicao de um temporario ativo. Deve ter motivo.' },
+    { nome: 'EFETIVAR', desc: 'Solicita ao RH a efetivacao de um temporario ativo.' },
+    { nome: 'FILTROS', desc: 'Ajuda a localizar funcionarios por nome, matricula, setor, turma ou status.' },
+    { nome: 'CONTROLE DE FALTAS', desc: 'Tela para lancar P, F, A, FE, DA ou SS conforme regra do periodo.' },
+    { nome: 'HISTORICO DO QUADRO', desc: 'Mostra movimentacoes que alteraram o quadro travado, apenas para consulta.' },
+  ];
+
+  return (
+    <section id="botoes" className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Play className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold">Principais botoes</h2>
+          <p className="text-muted-foreground text-sm">O que cada acao importante faz no sistema</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border bg-card p-5 space-y-3">
+        <h3 className="font-bold text-base">Para que serve no dia a dia</h3>
+        <p className="text-sm text-muted-foreground">
+          O QuadroRH existe para manter o quadro de funcionarios correto: quem esta ativo, quem esta em falta,
+          quem precisa de turma, quem esta em previsao, quem precisa ser substituido ou efetivado, e quais alteracoes mexeram no quadro.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-3">
+        {botoes.map(item => (
+          <div key={item.nome} className="rounded-xl border bg-card p-4">
+            <p className="text-sm font-bold text-primary">{item.nome}</p>
+            <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <InfoBox tipo="aviso">
+        Se uma notificacao exigir resposta, ela deve ser respondida antes de sair. Quando for apenas aviso, use <strong>CIENTE</strong>.
+      </InfoBox>
+    </section>
+  );
+}
+
 function SecaoInicio() {
   return (
     <section id="inicio" className="space-y-6">
@@ -454,6 +502,19 @@ function SecaoInicio() {
       <InfoBox tipo="dica">
         Use o <strong>botão MENU</strong> no canto superior direito para navegar entre as telas.
       </InfoBox>
+
+      <div className="rounded-2xl border bg-card p-5 space-y-3">
+        <h3 className="font-bold text-base">Regra de visualizacao por lider</h3>
+        <div className="grid sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <p><strong className="text-foreground">LEILA:</strong> MOD - SOPRO A e PRODUCAO SOPRO G+P A</p>
+          <p><strong className="text-foreground">ALEX:</strong> MOD - SOPRO B e PRODUCAO SOPRO G+P B</p>
+          <p><strong className="text-foreground">AMILTON:</strong> MOD - SOPRO C e PRODUCAO SOPRO G+P C</p>
+          <p><strong className="text-foreground">SILVIA:</strong> DECORACAO MOD DIA e DECORACAO MOD NOITE</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          RH, Paulo, Mauricio e administradores podem visualizar mais areas conforme permissao. Lideranca ve e edita somente seus setores.
+        </p>
+      </div>
     </section>
   );
 }
@@ -1415,6 +1476,7 @@ export default function ManualGestor() {
           {/* Conteúdo */}
           <main className="flex-1 min-w-0 space-y-16">
             <SecaoSobre />
+            <SecaoBotoes />
             <SecaoInicio />
             <SecaoDashboard />
             <SecaoEscalas />
