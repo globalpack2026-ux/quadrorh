@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PeriodoPonto, RegistroPonto, PontoTipo, PeriodoStatus } from '@/types/database';
 import { toast } from 'sonner';
 import { addMonths, format, parseISO } from 'date-fns';
+import { pontoApi } from '@/lib/pontoApi';
 
 function getErrorDetails(error: unknown) {
   const err = error as { message?: string; code?: string };
@@ -194,11 +195,10 @@ export function useCreateRegistroFalta() {
       tipo: PontoTipo;
       observacao?: string | null;
     }) => {
-      const { data, error } = await supabase
-        .from('registros_ponto')
-        .insert({ ...registro, ativo_no_periodo: true })
-        .select()
-        .single();
+      const { data, error } = await pontoApi.insert('registros_ponto', { ...registro, ativo_no_periodo: true }, {
+        select: '*',
+        single: true,
+      });
       
       if (error) throw error;
       return data;
@@ -222,12 +222,11 @@ export function useUpdateRegistroFalta() {
   
   return useMutation({
     mutationFn: async ({ id, tipo, observacao }: { id: string; tipo: PontoTipo; observacao?: string | null }) => {
-      const { data, error } = await supabase
-        .from('registros_ponto')
-        .update({ tipo, ...(observacao !== undefined ? { observacao } : {}) })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await pontoApi.update('registros_ponto', { tipo, ...(observacao !== undefined ? { observacao } : {}) }, {
+        eq: { id },
+        select: '*',
+        single: true,
+      });
       
       if (error) throw error;
       return data;
@@ -247,10 +246,9 @@ export function useDeleteRegistroFalta() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('registros_ponto')
-        .delete()
-        .eq('id', id);
+      const { error } = await pontoApi.delete('registros_ponto', {
+        eq: { id },
+      });
       
       if (error) throw error;
     },
