@@ -53,6 +53,7 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   preencher_faltas: ClipboardList,
   alteracao_quadro: BarChart3,
   historico_quadro_comunicado: BarChart3,
+  atualizacao_temporarios: Users,
 };
 
 const calcularCobrancaTurmaPendente = (dataReferencia?: string | null) => {
@@ -96,6 +97,7 @@ const TIPO_LABELS: Record<string, string> = {
   cobranca_faltas: 'COBRANCA FALTAS',
   alteracao_quadro: 'ALTERACAO DO QUADRO',
   historico_quadro_comunicado: 'HISTORICO DO QUADRO',
+  atualizacao_temporarios: 'ATUALIZACAO DO SISTEMA',
 };
 
 const TIPOS_RECEBIMENTO = [
@@ -291,8 +293,9 @@ export default function Notificacoes() {
   const [consultaExperienciaOpen, setConsultaExperienciaOpen] = useState(false);
   const [isInserindoCobTrein, setIsInserindoCobTrein] = useState(false);
   const [isInserindoFaltas, setIsInserindoFaltas] = useState(false);
-    const [isInserindoHistoricoQuadro, setIsInserindoHistoricoQuadro] = useState(false);
-const [galeriaOpen, setGaleriaOpen] = useState(false);
+  const [isInserindoHistoricoQuadro, setIsInserindoHistoricoQuadro] = useState(false);
+  const [isInserindoTemporarios, setIsInserindoTemporarios] = useState(false);
+  const [galeriaOpen, setGaleriaOpen] = useState(false);
   const [salvandoRecebimento, setSalvandoRecebimento] = useState<string | null>(null);
 
   const salvarRecebimentoMutation = useMutation({
@@ -650,6 +653,70 @@ const [galeriaOpen, setGaleriaOpen] = useState(false);
       setIsInserindoHistoricoQuadro(false);
     }
   };
+
+  const inserirComunicadoTemporarios = async () => {
+    setIsInserindoTemporarios(true);
+    try {
+      const { data: existente, error: existenteError } = await supabase
+        .from('eventos_sistema')
+        .select('id')
+        .eq('tipo', 'atualizacao_temporarios')
+        .eq('notificado', false)
+        .limit(1);
+
+      if (existenteError) throw existenteError;
+      if (existente && existente.length > 0) {
+        toast.info('Ja existe comunicado de temporarios pendente para envio.');
+        return;
+      }
+
+      const { data: usuariosAtivos, error: usuariosError } = await supabase
+        .from('user_roles')
+        .select('id, nome, perfil, acesso_admin, recebe_notificacoes')
+        .eq('ativo', true);
+
+      if (usuariosError) throw usuariosError;
+
+      const destinatarios = (usuariosAtivos || [])
+        .filter((usuario: any) => usuario.recebe_notificacoes !== false)
+        .filter((usuario: any) => {
+          const nome = String(usuario.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+          return usuario.acesso_admin
+            || ['LUCIANO', 'MAURICIO', 'PAULO', 'JUNIOR', 'ELIANE', 'SONIA'].includes(nome)
+            || ['rh_completo', 'rh_demissoes', 'gestor_setor'].includes(usuario.perfil);
+        })
+        .map((usuario: any) => usuario.id);
+
+      if (destinatarios.length === 0) {
+        toast.info('Nenhum usuario ativo encontrado para receber o comunicado.');
+        return;
+      }
+
+      const { error } = await supabase.from('eventos_sistema').insert({
+        tipo: 'atualizacao_temporarios',
+        descricao: 'ATUALIZACAO: SUBSTITUIR / EFETIVAR TEMPORARIOS',
+        funcionario_nome: 'SUBSTITUIR / EFETIVAR',
+        setor_nome: 'FUNCIONARIOS',
+        criado_por: userRole?.nome || 'LUCIANO',
+        dados_extra: {
+          destinatarios,
+          mensagem_personalizada: 'ATUALIZACAO DO SISTEMA: NO MENU LATERAL ACESSE FUNCIONARIOS E CLIQUE NA ABA SUBSTITUIR / EFETIVAR. USE ESSA ABA PARA SOLICITAR SUBSTITUICAO OU EFETIVACAO DE TEMPORARIOS ATIVOS. APOS LER, CLIQUE EM CIENTE.',
+          link: '/funcionarios?aba=temporarios',
+        },
+        notificado: false,
+      });
+
+      if (error) throw error;
+
+      toast.success('Comunicado criado na Central. Selecione e envie para os usuarios.');
+      queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+    } catch (err) {
+      toast.error('Erro ao criar comunicado de temporarios.');
+      console.error(err);
+    } finally {
+      setIsInserindoTemporarios(false);
+    }
+  };
   // Mapa de vistas por evento_id
   const vistasPorEvento = useMemo(() => {
     const map: Record<string, NotificacaoVista[]> = {};
@@ -927,6 +994,16 @@ const [galeriaOpen, setGaleriaOpen] = useState(false);
           >
             {isInserindoHistoricoQuadro ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BarChart3 className="h-3.5 w-3.5" />}
             HIST. QUADRO
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50"
+            onClick={inserirComunicadoTemporarios}
+            disabled={isInserindoTemporarios}
+          >
+            {isInserindoTemporarios ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
+            TEMPORARIOS
           </Button>
           <Button
             size="sm"
